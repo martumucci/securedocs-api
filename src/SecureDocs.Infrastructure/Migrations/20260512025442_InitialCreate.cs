@@ -11,8 +11,12 @@ namespace SecureDocs.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "securedocs");
+
             migrationBuilder.CreateTable(
                 name: "Documents",
+                schema: "securedocs",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -26,6 +30,7 @@ namespace SecureDocs.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OutboxMessages",
+                schema: "securedocs",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -41,6 +46,7 @@ namespace SecureDocs.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessages_ProcessedAt",
+                schema: "securedocs",
                 table: "OutboxMessages",
                 column: "ProcessedAt",
                 filter: "\"ProcessedAt\" IS NULL");
@@ -50,10 +56,12 @@ namespace SecureDocs.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Documents");
+                name: "Documents",
+                schema: "securedocs");
 
             migrationBuilder.DropTable(
-                name: "OutboxMessages");
+                name: "OutboxMessages",
+                schema: "securedocs");
         }
     }
 }

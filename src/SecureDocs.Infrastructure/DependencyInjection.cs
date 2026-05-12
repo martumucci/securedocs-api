@@ -15,7 +15,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("Postgres")));
+            options.UseNpgsql(
+                configuration.GetConnectionString("Postgres"),
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "securedocs")));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IDocumentRepository, DocumentRepository>();

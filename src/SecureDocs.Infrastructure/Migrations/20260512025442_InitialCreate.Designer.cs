@@ -12,7 +12,7 @@ using SecureDocs.Infrastructure.Persistence;
 namespace SecureDocs.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260512014342_InitialCreate")]
+    [Migration("20260512025442_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,6 +20,7 @@ namespace SecureDocs.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("securedocs")
                 .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -41,7 +42,7 @@ namespace SecureDocs.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Documents");
+                    b.ToTable("Documents", "securedocs");
                 });
 
             modelBuilder.Entity("SecureDocs.Infrastructure.Persistence.OutboxMessage", b =>
@@ -70,7 +71,7 @@ namespace SecureDocs.Infrastructure.Migrations
                     b.HasIndex("ProcessedAt")
                         .HasFilter("\"ProcessedAt\" IS NULL");
 
-                    b.ToTable("OutboxMessages");
+                    b.ToTable("OutboxMessages", "securedocs");
                 });
 #pragma warning restore 612, 618
         }
