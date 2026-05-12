@@ -1,5 +1,6 @@
 using FluentValidation;
 using MediatR;
+using SecureDocs.API.ExceptionHandlers;
 using SecureDocs.Application.Common.Behaviors;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Infrastructure;
@@ -17,11 +18,16 @@ builder.Services.AddValidatorsFromAssemblyContaining<SubmitDocumentCommand>();
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

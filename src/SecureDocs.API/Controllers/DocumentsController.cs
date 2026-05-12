@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
+using SecureDocs.Application.Documents.Queries.GetDocumentById;
 
 namespace SecureDocs.API.Controllers;
 
@@ -24,6 +25,20 @@ public class DocumentsController : ControllerBase
         var result = await _mediator.Send(command, cancellationToken);
 
         return Created($"/documents/{result.DocumentId}", result);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var query = new GetDocumentByIdQuery(id);
+        var result = await _mediator.Send(query, cancellationToken);
+
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
     }
 }
 

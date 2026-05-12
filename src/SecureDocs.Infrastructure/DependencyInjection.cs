@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Application.Documents;
+using SecureDocs.Infrastructure.Messaging;
 using SecureDocs.Infrastructure.Persistence;
 using SecureDocs.Infrastructure.Persistence.Repositories;
 using SecureDocs.Infrastructure.Redis;
@@ -27,6 +28,9 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
 
         services.AddSingleton<IPayloadStore, RedisPayloadStore>();
+
+        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
+        services.AddHostedService<OutboxPublisher>();
 
         return services;
     }

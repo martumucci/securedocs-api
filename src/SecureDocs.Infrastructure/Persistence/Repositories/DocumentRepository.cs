@@ -16,4 +16,9 @@ public class DocumentRepository : IDocumentRepository
     {
         await _context.Documents.AddAsync(document, cancellationToken);
     }
+
+    public async Task<Document?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _context.Documents.FindAsync(new object?[] { id }, cancellationToken);
+    }
 }
