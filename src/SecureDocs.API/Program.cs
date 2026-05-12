@@ -1,11 +1,14 @@
 using FluentValidation;
 using MediatR;
+using RedisRateLimiting;
 using SecureDocs.API.ExceptionHandlers;
 using SecureDocs.API.Middleware;
 using SecureDocs.Application.Common.Behaviors;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Infrastructure;
 using Serilog;
+using StackExchange.Redis;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,29 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+var permitLimit = builder.Configuration.GetValue<int>("RateLimiting:SubmitDocument:PermitLimit", 10);
+var windowSeconds = builder.Configuration.GetValue<int>("RateLimiting:SubmitDocument:WindowSeconds", 60);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("submit-document", httpContext =>
+    {
+        var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RedisRateLimitPartition.GetFixedWindowRateLimiter(
+            partitionKey: $"rate-limit:submit:{clientIp}",
+            factory: _ => new RedisFixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromSeconds(windowSeconds),
+                ConnectionMultiplexerFactory = () =>
+                    httpContext.RequestServices.GetRequiredService<IConnectionMultiplexer>()
+            });
+    });
+});
 
 builder.Services.AddHealthChecks()
     .AddNpgSql(
@@ -61,6 +87,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 

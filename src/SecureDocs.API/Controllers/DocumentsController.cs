@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Application.Documents.Queries.GetDocumentById;
 
@@ -17,6 +18,7 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("submit-document")]
     public async Task<IActionResult> Submit(
         [FromBody] SubmitDocumentRequest request,
         CancellationToken cancellationToken)
