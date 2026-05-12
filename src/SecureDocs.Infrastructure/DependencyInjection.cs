@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Application.Documents;
 using SecureDocs.Infrastructure.Messaging;
+using SecureDocs.Infrastructure.Messaging.Consumers;
 using SecureDocs.Infrastructure.Persistence;
 using SecureDocs.Infrastructure.Persistence.Repositories;
 using SecureDocs.Infrastructure.Redis;
@@ -23,6 +24,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
             ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
@@ -38,6 +40,8 @@ public static class DependencyInjection
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();
+
+            x.AddConsumer<DocumentProcessedConsumer>();
 
             x.AddEntityFrameworkOutbox<ApplicationDbContext>(o =>
             {

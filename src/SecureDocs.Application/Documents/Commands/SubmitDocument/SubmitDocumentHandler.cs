@@ -1,4 +1,3 @@
-using MassTransit;
 using MediatR;
 using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Application.Documents.IntegrationEvents;
@@ -11,18 +10,18 @@ public class SubmitDocumentHandler : IRequestHandler<SubmitDocumentCommand, Subm
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IPayloadStore _payloadStore;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IIntegrationEventPublisher _integrationEventPublisher;
     private readonly IUnitOfWork _unitOfWork;
 
     public SubmitDocumentHandler(
         IDocumentRepository documentRepository,
         IPayloadStore payloadStore,
-        IPublishEndpoint publishEndpoint,
+        IIntegrationEventPublisher integrationEventPublisher,
         IUnitOfWork unitOfWork)
     {
         _documentRepository = documentRepository;
         _payloadStore = payloadStore;
-        _publishEndpoint = publishEndpoint;
+        _integrationEventPublisher = integrationEventPublisher;
         _unitOfWork = unitOfWork;
     }
 
@@ -43,10 +42,7 @@ public class SubmitDocumentHandler : IRequestHandler<SubmitDocumentCommand, Subm
                     DocumentId: submitted.DocumentId,
                     SubmittedAt: submitted.OccurredAt);
 
-                await _publishEndpoint.Publish(
-                    integrationEvent,
-                    ctx => ctx.MessageId = integrationEvent.MessageId,
-                    cancellationToken);
+                await _integrationEventPublisher.PublishAsync(integrationEvent, cancellationToken);
             }
         }
 

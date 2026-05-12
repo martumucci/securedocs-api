@@ -1,3 +1,5 @@
+using SecureDocs.Application.Common.Interfaces;
+
 namespace SecureDocs.Application.Documents.IntegrationEvents;
 
 public record DocumentProcessedIntegrationEvent(
@@ -7,4 +9,4 @@ public record DocumentProcessedIntegrationEvent(
     Guid? EncryptedPayloadId,
     string? ErrorReason,
     DateTimeOffset ProcessedAt
-);
+) : IIntegrationEvent;

@@ -39,4 +39,36 @@ public class Document : Entity
 
         return document;
     }
+
+    public void MarkAsProcessed()
+    {
+        if (Status == DocumentStatus.Processed)
+        {
+            return;
+        }
+
+        if (Status != DocumentStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot mark document as Processed from state {Status}.");
+        }
+
+        Status = DocumentStatus.Processed;
+    }
+
+    public void MarkAsFailed()
+    {
+        if (Status == DocumentStatus.Failed)
+        {
+            return;
+        }
+
+        if (Status != DocumentStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot mark document as Failed from state {Status}.");
+        }
+
+        Status = DocumentStatus.Failed;
+    }
 }
