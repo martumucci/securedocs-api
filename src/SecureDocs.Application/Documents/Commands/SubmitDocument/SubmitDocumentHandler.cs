@@ -1,6 +1,9 @@
+using MassTransit;
 using MediatR;
 using SecureDocs.Application.Common.Interfaces;
+using SecureDocs.Application.Documents.IntegrationEvents;
 using SecureDocs.Domain.Documents;
+using SecureDocs.Domain.Documents.Events;
 
 namespace SecureDocs.Application.Documents.Commands.SubmitDocument;
 
@@ -8,18 +11,18 @@ public class SubmitDocumentHandler : IRequestHandler<SubmitDocumentCommand, Subm
 {
     private readonly IDocumentRepository _documentRepository;
     private readonly IPayloadStore _payloadStore;
-    private readonly IOutboxWriter _outboxWriter;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly IUnitOfWork _unitOfWork;
 
     public SubmitDocumentHandler(
         IDocumentRepository documentRepository,
         IPayloadStore payloadStore,
-        IOutboxWriter outboxWriter,
+        IPublishEndpoint publishEndpoint,
         IUnitOfWork unitOfWork)
     {
         _documentRepository = documentRepository;
         _payloadStore = payloadStore;
-        _outboxWriter = outboxWriter;
+        _publishEndpoint = publishEndpoint;
         _unitOfWork = unitOfWork;
     }
 
@@ -33,7 +36,18 @@ public class SubmitDocumentHandler : IRequestHandler<SubmitDocumentCommand, Subm
 
         foreach (var domainEvent in document.DomainEvents)
         {
-            await _outboxWriter.AddAsync(domainEvent, cancellationToken);
+            if (domainEvent is DocumentSubmittedEvent submitted)
+            {
+                var integrationEvent = new DocumentSubmittedIntegrationEvent(
+                    MessageId: Guid.NewGuid(),
+                    DocumentId: submitted.DocumentId,
+                    SubmittedAt: submitted.OccurredAt);
+
+                await _publishEndpoint.Publish(
+                    integrationEvent,
+                    ctx => ctx.MessageId = integrationEvent.MessageId,
+                    cancellationToken);
+            }
         }
 
         document.ClearDomainEvents();
