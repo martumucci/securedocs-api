@@ -34,3 +34,13 @@ services:
       - "5540:5540"
     depends_on:
       - redis
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: securedocs-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: securedocs
+      RABBITMQ_DEFAULT_PASS: securedocs
+    ports:
+      - "5672:5672"
+      - "15672:15672"
