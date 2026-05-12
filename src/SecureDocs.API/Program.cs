@@ -32,6 +32,20 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        connectionString: builder.Configuration.GetConnectionString("Postgres")!,
+        name: "postgres",
+        tags: new[] { "ready" })
+    .AddRedis(
+        redisConnectionString: builder.Configuration.GetConnectionString("Redis")!,
+        name: "redis",
+        tags: new[] { "ready" })
+    .AddRabbitMQ(
+        rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
+        name: "rabbitmq",
+        tags: new[] { "ready" });
+
 var app = builder.Build();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -51,5 +65,15 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health/live", new()
+{
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/health/ready", new()
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 app.Run();
