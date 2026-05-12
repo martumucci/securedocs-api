@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: securedocs-postgres
+    environment:
+      POSTGRES_USER: securedocs
+      POSTGRES_PASSWORD: securedocs
+      POSTGRES_DB: securedocs
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: securedocs-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+  redis:
+    image: redis:7-alpine
+    container_name: securedocs-redis
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6379:6379"
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: securedocs-redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis

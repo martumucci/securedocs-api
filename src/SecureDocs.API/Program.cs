@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using SecureDocs.Application.Common.Behaviors;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
+using SecureDocs.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,8 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddValidatorsFromAssemblyContaining<SubmitDocumentCommand>();
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
