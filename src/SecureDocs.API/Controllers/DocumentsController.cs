@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Application.Documents.Queries.GetDocumentById;
+using SecureDocs.Application.Documents.Queries.GetDocumentIntegrity;
 
 namespace SecureDocs.API.Controllers;
 
@@ -33,6 +34,20 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var query = new GetDocumentByIdQuery(id);
+        var result = await _mediator.Send(query, cancellationToken);
+
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/integrity")]
+    public async Task<IActionResult> GetIntegrity(Guid id, CancellationToken cancellationToken)
+    {
+        var query = new GetDocumentIntegrityQuery(id);
         var result = await _mediator.Send(query, cancellationToken);
 
         if (result is null)
