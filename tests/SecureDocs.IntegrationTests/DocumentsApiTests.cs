@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Domain.Documents;
+using SecureDocs.Domain.EncryptedPayloads;
 using SecureDocs.Infrastructure.Persistence;
 using StackExchange.Redis;
 
@@ -94,5 +95,63 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetIntegrity_WithExistingPayload_ReturnsIntegrityDto()
+    {
+        // Arrange — seed a Document + EncryptedPayload directly (worker is not running in this test)
+        var document = Document.Submit();
+        var hash = new byte[32];
+        var signature = new byte[64];
+        new Random(42).NextBytes(hash);
+        new Random(43).NextBytes(signature);
+
+        var payload = EncryptedPayload.Create(
+            documentId: document.Id,
+            ciphertext: [1, 2, 3],
+            nonce: [4, 5, 6],
+            tag: [7, 8, 9],
+            hash: hash,
+            signature: signature,
+            algorithm: "AES-256-GCM");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            dbContext.Documents.Add(document);
+            dbContext.EncryptedPayloads.Add(payload);
+            await dbContext.SaveChangesAsync();
+        }
+
+        // Act
+        var response = await _client.GetAsync($"/Documents/{document.Id}/integrity");
+
+        // Assert response
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var dto = await response.Content.ReadFromJsonAsync<IntegrityDtoLocal>();
+        dto.Should().NotBeNull();
+        dto!.DocumentId.Should().Be(document.Id);
+        dto.Hash.Should().BeEquivalentTo(hash);
+        dto.Signature.Should().BeEquivalentTo(signature);
+        dto.Algorithm.Should().Be("AES-256-GCM");
+        dto.ProcessedAt.Should().Be(payload.ProcessedAt);
+    }
+
+    [Fact]
+    public async Task GetIntegrity_WhenNoEncryptedPayloadExists_ReturnsNotFound()
+    {
+        // Act
+        var response = await _client.GetAsync($"/Documents/{Guid.NewGuid()}/integrity");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
     private record DocumentDtoLocal(Guid Id, DocumentStatus Status, DateTimeOffset SubmittedAt);
+
+    private record IntegrityDtoLocal(
+        Guid DocumentId,
+        byte[] Hash,
+        byte[] Signature,
+        string Algorithm,
+        DateTimeOffset ProcessedAt);
 }
