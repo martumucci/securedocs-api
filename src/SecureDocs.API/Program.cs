@@ -105,3 +105,5 @@ app.MapHealthChecks("/health/ready", new()
 });
 
 app.Run();
+
+public partial class Program;
