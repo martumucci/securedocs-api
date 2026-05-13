@@ -6,7 +6,12 @@ public record DocumentProcessedIntegrationEvent(
     Guid MessageId,
     Guid DocumentId,
     string Status,
-    Guid? EncryptedPayloadId,
+    byte[]? Ciphertext,
+    byte[]? Nonce,
+    byte[]? Tag,
+    byte[]? Hash,
+    byte[]? Signature,
+    string? Algorithm,
     string? ErrorReason,
     DateTimeOffset ProcessedAt
 ) : IIntegrationEvent;

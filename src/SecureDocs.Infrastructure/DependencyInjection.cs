@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Application.Documents;
+using SecureDocs.Application.EncryptedPayloads;
 using SecureDocs.Infrastructure.Messaging;
 using SecureDocs.Infrastructure.Messaging.Consumers;
 using SecureDocs.Infrastructure.Persistence;
@@ -24,6 +25,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IEncryptedPayloadRepository, EncryptedPayloadRepository>();
         services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -54,6 +56,12 @@ public static class DependencyInjection
             x.UsingRabbitMq((context, cfg) =>
             {
                 cfg.Host(configuration.GetConnectionString("RabbitMq"));
+
+                var retryIntervals = massTransitOptions.Retry.IntervalsSeconds
+                    .Select(s => TimeSpan.FromSeconds(s))
+                    .ToArray();
+                cfg.UseMessageRetry(r => r.Intervals(retryIntervals));
+
                 cfg.ConfigureEndpoints(context);
             });
         });

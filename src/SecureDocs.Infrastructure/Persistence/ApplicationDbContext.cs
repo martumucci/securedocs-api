@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Domain.Documents;
+using SecureDocs.Domain.EncryptedPayloads;
 
 namespace SecureDocs.Infrastructure.Persistence;
 
@@ -13,6 +14,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     }
 
     public DbSet<Document> Documents => Set<Document>();
+    public DbSet<EncryptedPayload> EncryptedPayloads => Set<EncryptedPayload>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

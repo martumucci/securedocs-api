@@ -1,7 +1,7 @@
 using MassTransit;
 using MediatR;
+using SecureDocs.Application.Documents.Commands.CompleteDocumentProcessing;
 using SecureDocs.Application.Documents.Commands.MarkDocumentAsFailed;
-using SecureDocs.Application.Documents.Commands.MarkDocumentAsProcessed;
 using SecureDocs.Application.Documents.IntegrationEvents;
 using LogContext = Serilog.Context.LogContext;
 
@@ -30,7 +30,14 @@ public class DocumentProcessedConsumer : IConsumer<DocumentProcessedIntegrationE
             if (message.Status == "Success")
             {
                 await _mediator.Send(
-                    new MarkDocumentAsProcessedCommand(message.DocumentId),
+                    new CompleteDocumentProcessingCommand(
+                        DocumentId: message.DocumentId,
+                        Ciphertext: message.Ciphertext!,
+                        Nonce: message.Nonce!,
+                        Tag: message.Tag!,
+                        Hash: message.Hash!,
+                        Signature: message.Signature!,
+                        Algorithm: message.Algorithm!),
                     context.CancellationToken);
             }
             else if (message.Status == "Failed")
