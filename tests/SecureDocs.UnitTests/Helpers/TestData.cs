@@ -1,3 +1,4 @@
+using SecureDocs.Application.Common.Interfaces;
 using SecureDocs.Application.Documents.Commands.CompleteDocumentProcessing;
 using SecureDocs.Domain.EncryptedPayloads;
 
@@ -6,10 +7,14 @@ namespace SecureDocs.UnitTests.Helpers;
 internal static class TestData
 {
     public const string ValidAlgorithm = "AES-256-GCM";
+    public const string ValidKdfAlgorithm = "scrypt";
+    public const string ValidKdfParameters = "{\"n\":16384,\"r\":8,\"p\":1}";
+    public const string ValidPassphrase = "correct horse battery staple";
 
     public static byte[] ValidCiphertext() => [1, 2, 3];
     public static byte[] ValidNonce() => [4, 5, 6];
     public static byte[] ValidTag() => [7, 8, 9];
+    public static byte[] ValidSalt() => new byte[16];
     public static byte[] ValidHash() => new byte[32];
     public static byte[] ValidSignature() => new byte[64];
 
@@ -18,6 +23,9 @@ internal static class TestData
         byte[]? ciphertext = null,
         byte[]? nonce = null,
         byte[]? tag = null,
+        byte[]? salt = null,
+        string? kdfAlgorithm = null,
+        string? kdfParameters = null,
         byte[]? hash = null,
         byte[]? signature = null,
         string? algorithm = null)
@@ -27,6 +35,9 @@ internal static class TestData
             ciphertext: ciphertext ?? ValidCiphertext(),
             nonce: nonce ?? ValidNonce(),
             tag: tag ?? ValidTag(),
+            salt: salt ?? ValidSalt(),
+            kdfAlgorithm: kdfAlgorithm ?? ValidKdfAlgorithm,
+            kdfParameters: kdfParameters ?? ValidKdfParameters,
             hash: hash ?? ValidHash(),
             signature: signature ?? ValidSignature(),
             algorithm: algorithm ?? ValidAlgorithm);
@@ -37,6 +48,9 @@ internal static class TestData
         byte[]? ciphertext = null,
         byte[]? nonce = null,
         byte[]? tag = null,
+        byte[]? salt = null,
+        string? kdfAlgorithm = null,
+        string? kdfParameters = null,
         byte[]? hash = null,
         byte[]? signature = null,
         string? algorithm = null)
@@ -46,8 +60,20 @@ internal static class TestData
             Ciphertext: ciphertext ?? ValidCiphertext(),
             Nonce: nonce ?? ValidNonce(),
             Tag: tag ?? ValidTag(),
+            Salt: salt ?? ValidSalt(),
+            KdfAlgorithm: kdfAlgorithm ?? ValidKdfAlgorithm,
+            KdfParameters: kdfParameters ?? ValidKdfParameters,
             Hash: hash ?? ValidHash(),
             Signature: signature ?? ValidSignature(),
             Algorithm: algorithm ?? ValidAlgorithm);
+    }
+
+    public static SubmissionPayload ASubmissionPayload(
+        string? payload = null,
+        string? passphrase = null)
+    {
+        return new SubmissionPayload(
+            Payload: payload ?? "any payload",
+            Passphrase: passphrase ?? ValidPassphrase);
     }
 }

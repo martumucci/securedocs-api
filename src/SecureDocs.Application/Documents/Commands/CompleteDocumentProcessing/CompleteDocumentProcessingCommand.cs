@@ -7,6 +7,9 @@ public record CompleteDocumentProcessingCommand(
     byte[] Ciphertext,
     byte[] Nonce,
     byte[] Tag,
+    byte[] Salt,
+    string KdfAlgorithm,
+    string KdfParameters,
     byte[] Hash,
     byte[] Signature,
     string Algorithm

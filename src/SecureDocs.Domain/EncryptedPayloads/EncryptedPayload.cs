@@ -6,11 +6,15 @@ public class EncryptedPayload : Entity
 {
     private const int Sha256HashLength = 32;
     private const int Ed25519SignatureLength = 64;
+    private const int MinimumSaltLength = 16;
 
     public Guid DocumentId { get; private set; }
     public byte[] Ciphertext { get; private set; } = null!;
     public byte[] Nonce { get; private set; } = null!;
     public byte[] Tag { get; private set; } = null!;
+    public byte[] Salt { get; private set; } = null!;
+    public string KdfAlgorithm { get; private set; } = null!;
+    public string KdfParameters { get; private set; } = null!;
     public byte[] Hash { get; private set; } = null!;
     public byte[] Signature { get; private set; } = null!;
     public string Algorithm { get; private set; } = null!;
@@ -22,6 +26,9 @@ public class EncryptedPayload : Entity
         byte[] ciphertext,
         byte[] nonce,
         byte[] tag,
+        byte[] salt,
+        string kdfAlgorithm,
+        string kdfParameters,
         byte[] hash,
         byte[] signature,
         string algorithm,
@@ -41,6 +48,17 @@ public class EncryptedPayload : Entity
 
         if (tag is null || tag.Length == 0)
             throw new ArgumentException("Tag cannot be null or empty.", nameof(tag));
+
+        if (salt is null || salt.Length < MinimumSaltLength)
+            throw new ArgumentException(
+                $"Salt must be at least {MinimumSaltLength} bytes.",
+                nameof(salt));
+
+        if (string.IsNullOrWhiteSpace(kdfAlgorithm))
+            throw new ArgumentException("KdfAlgorithm cannot be null or empty.", nameof(kdfAlgorithm));
+
+        if (string.IsNullOrWhiteSpace(kdfParameters))
+            throw new ArgumentException("KdfParameters cannot be null or empty.", nameof(kdfParameters));
 
         if (hash is null || hash.Length != Sha256HashLength)
             throw new ArgumentException(
@@ -63,6 +81,9 @@ public class EncryptedPayload : Entity
         Ciphertext = ciphertext;
         Nonce = nonce;
         Tag = tag;
+        Salt = salt;
+        KdfAlgorithm = kdfAlgorithm;
+        KdfParameters = kdfParameters;
         Hash = hash;
         Signature = signature;
         Algorithm = algorithm;
@@ -74,6 +95,9 @@ public class EncryptedPayload : Entity
         byte[] ciphertext,
         byte[] nonce,
         byte[] tag,
+        byte[] salt,
+        string kdfAlgorithm,
+        string kdfParameters,
         byte[] hash,
         byte[] signature,
         string algorithm)
@@ -84,6 +108,9 @@ public class EncryptedPayload : Entity
             ciphertext: ciphertext,
             nonce: nonce,
             tag: tag,
+            salt: salt,
+            kdfAlgorithm: kdfAlgorithm,
+            kdfParameters: kdfParameters,
             hash: hash,
             signature: signature,
             algorithm: algorithm,

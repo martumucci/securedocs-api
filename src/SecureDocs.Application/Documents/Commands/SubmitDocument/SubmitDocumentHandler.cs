@@ -29,7 +29,8 @@ public class SubmitDocumentHandler : IRequestHandler<SubmitDocumentCommand, Subm
     {
         var document = Document.Submit();
 
-        await _payloadStore.SaveAsync(document.Id, request.Payload, cancellationToken);
+        var submission = new SubmissionPayload(request.Payload, request.Passphrase);
+        await _payloadStore.SaveAsync(document.Id, submission, cancellationToken);
 
         await _documentRepository.AddAsync(document, cancellationToken);
 

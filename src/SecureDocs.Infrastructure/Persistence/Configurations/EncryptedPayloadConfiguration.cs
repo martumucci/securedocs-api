@@ -28,6 +28,18 @@ public class EncryptedPayloadConfiguration : IEntityTypeConfiguration<EncryptedP
             .IsRequired()
             .HasColumnType("bytea");
 
+        builder.Property(e => e.Salt)
+            .IsRequired()
+            .HasColumnType("bytea");
+
+        builder.Property(e => e.KdfAlgorithm)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(e => e.KdfParameters)
+            .IsRequired()
+            .HasMaxLength(500);
+
         builder.Property(e => e.Hash)
             .IsRequired()
             .HasColumnType("bytea");

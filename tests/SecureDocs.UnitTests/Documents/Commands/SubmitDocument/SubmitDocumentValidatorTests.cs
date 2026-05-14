@@ -1,5 +1,6 @@
 using FluentValidation.TestHelper;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
+using SecureDocs.UnitTests.Helpers;
 
 namespace SecureDocs.UnitTests.Documents.Commands.SubmitDocument;
 
@@ -7,12 +8,17 @@ public class SubmitDocumentValidatorTests
 {
     private readonly SubmitDocumentValidator _validator = new();
 
-    [Fact]
-    public void Validate_WithValidPayload_HasNoErrors()
+    private static SubmitDocumentCommand Command(string? payload = null, string? passphrase = null)
     {
-        var command = new SubmitDocumentCommand("valid content");
+        return new SubmitDocumentCommand(
+            Payload: payload ?? "valid content",
+            Passphrase: passphrase ?? TestData.ValidPassphrase);
+    }
 
-        var result = _validator.TestValidate(command);
+    [Fact]
+    public void Validate_WithValidPayloadAndPassphrase_HasNoErrors()
+    {
+        var result = _validator.TestValidate(Command());
 
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -20,9 +26,7 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithEmptyPayload_HasErrorForPayload()
     {
-        var command = new SubmitDocumentCommand(string.Empty);
-
-        var result = _validator.TestValidate(command);
+        var result = _validator.TestValidate(Command(payload: string.Empty));
 
         result.ShouldHaveValidationErrorFor(c => c.Payload);
     }
@@ -30,9 +34,7 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithPayloadExceedingMaxLength_HasErrorForPayload()
     {
-        var command = new SubmitDocumentCommand(new string('x', 100_001));
-
-        var result = _validator.TestValidate(command);
+        var result = _validator.TestValidate(Command(payload: new string('x', 100_001)));
 
         result.ShouldHaveValidationErrorFor(c => c.Payload);
     }
@@ -40,10 +42,40 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithPayloadAtMaxLength_HasNoErrors()
     {
-        var command = new SubmitDocumentCommand(new string('x', 100_000));
-
-        var result = _validator.TestValidate(command);
+        var result = _validator.TestValidate(Command(payload: new string('x', 100_000)));
 
         result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void Validate_WithEmptyPassphrase_HasErrorForPassphrase()
+    {
+        var result = _validator.TestValidate(Command(passphrase: string.Empty));
+
+        result.ShouldHaveValidationErrorFor(c => c.Passphrase);
+    }
+
+    [Fact]
+    public void Validate_WithPassphraseShorterThanMinimum_HasErrorForPassphrase()
+    {
+        var result = _validator.TestValidate(Command(passphrase: new string('p', 11)));
+
+        result.ShouldHaveValidationErrorFor(c => c.Passphrase);
+    }
+
+    [Fact]
+    public void Validate_WithPassphraseAtMinimumLength_HasNoErrors()
+    {
+        var result = _validator.TestValidate(Command(passphrase: new string('p', 12)));
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void Validate_WithPassphraseExceedingMaxLength_HasErrorForPassphrase()
+    {
+        var result = _validator.TestValidate(Command(passphrase: new string('p', 1025)));
+
+        result.ShouldHaveValidationErrorFor(c => c.Passphrase);
     }
 }

@@ -33,6 +33,9 @@ public class CompleteDocumentProcessingHandler : IRequestHandler<CompleteDocumen
             ciphertext: request.Ciphertext,
             nonce: request.Nonce,
             tag: request.Tag,
+            salt: request.Salt,
+            kdfAlgorithm: request.KdfAlgorithm,
+            kdfParameters: request.KdfParameters,
             hash: request.Hash,
             signature: request.Signature,
             algorithm: request.Algorithm);

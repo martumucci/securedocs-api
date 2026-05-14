@@ -24,7 +24,7 @@ public class DocumentsController : ControllerBase
         [FromBody] SubmitDocumentRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new SubmitDocumentCommand(request.Payload);
+        var command = new SubmitDocumentCommand(request.Payload, request.Passphrase);
         var result = await _mediator.Send(command, cancellationToken);
 
         return Created($"/documents/{result.DocumentId}", result);
@@ -59,4 +59,4 @@ public class DocumentsController : ControllerBase
     }
 }
 
-public record SubmitDocumentRequest(string Payload);
+public record SubmitDocumentRequest(string Payload, string Passphrase);

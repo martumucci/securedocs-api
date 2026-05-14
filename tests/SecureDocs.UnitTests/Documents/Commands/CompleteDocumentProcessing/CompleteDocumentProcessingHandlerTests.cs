@@ -103,6 +103,9 @@ public class CompleteDocumentProcessingHandlerTests
         capturedPayload.Ciphertext.Should().BeEquivalentTo(command.Ciphertext);
         capturedPayload.Nonce.Should().BeEquivalentTo(command.Nonce);
         capturedPayload.Tag.Should().BeEquivalentTo(command.Tag);
+        capturedPayload.Salt.Should().BeEquivalentTo(command.Salt);
+        capturedPayload.KdfAlgorithm.Should().Be(command.KdfAlgorithm);
+        capturedPayload.KdfParameters.Should().Be(command.KdfParameters);
         capturedPayload.Hash.Should().BeEquivalentTo(command.Hash);
         capturedPayload.Signature.Should().BeEquivalentTo(command.Signature);
         capturedPayload.Algorithm.Should().Be(command.Algorithm);

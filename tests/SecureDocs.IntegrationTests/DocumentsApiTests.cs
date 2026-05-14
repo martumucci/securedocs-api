@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
@@ -12,6 +13,8 @@ namespace SecureDocs.IntegrationTests;
 
 public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
 {
+    private const string ValidPassphrase = "correct horse battery staple";
+
     private readonly IntegrationTestFactory _factory;
     private readonly HttpClient _client;
 
@@ -22,11 +25,11 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
     }
 
     [Fact]
-    public async Task Post_WithValidPayload_PersistsDocumentAndStoresPayloadInRedis()
+    public async Task Post_WithValidPayload_PersistsDocumentAndStoresBlobInRedis()
     {
         // Arrange
         const string payload = "integration test content";
-        var request = new { payload };
+        var request = new { payload, passphrase = ValidPassphrase };
 
         // Act
         var response = await _client.PostAsJsonAsync("/Documents", request);
@@ -45,39 +48,50 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         documentInDb.Should().NotBeNull();
         documentInDb!.Status.Should().Be(DocumentStatus.Pending);
 
-        // Assert payload stored in Redis
+        // Assert JSON blob (payload + passphrase) stored in Redis
         var multiplexer = scope.ServiceProvider.GetRequiredService<IConnectionMultiplexer>();
         var redis = multiplexer.GetDatabase();
         var redisValue = await redis.StringGetAsync($"payload:{result.DocumentId}");
         redisValue.HasValue.Should().BeTrue();
-        redisValue.ToString().Should().Be(payload);
+
+        var blob = JsonSerializer.Deserialize<RedisBlob>(
+            redisValue.ToString(),
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        blob.Should().NotBeNull();
+        blob!.Payload.Should().Be(payload);
+        blob.Passphrase.Should().Be(ValidPassphrase);
     }
 
     [Fact]
     public async Task Post_WithEmptyPayload_ReturnsBadRequest()
     {
-        // Arrange
-        var request = new { payload = string.Empty };
+        var request = new { payload = string.Empty, passphrase = ValidPassphrase };
 
-        // Act
         var response = await _client.PostAsJsonAsync("/Documents", request);
 
-        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Post_WithPassphraseShorterThanMinimum_ReturnsBadRequest()
+    {
+        var request = new { payload = "any", passphrase = "short" };
+
+        var response = await _client.PostAsJsonAsync("/Documents", request);
+
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task Get_WithExistingId_ReturnsDocumentMetadata()
     {
-        // Arrange — first create one
-        const string payload = "another document";
-        var createResponse = await _client.PostAsJsonAsync("/Documents", new { payload });
+        var createResponse = await _client.PostAsJsonAsync(
+            "/Documents",
+            new { payload = "another document", passphrase = ValidPassphrase });
         var created = await createResponse.Content.ReadFromJsonAsync<SubmitDocumentResult>();
 
-        // Act
         var getResponse = await _client.GetAsync($"/Documents/{created!.DocumentId}");
 
-        // Assert
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await getResponse.Content.ReadFromJsonAsync<DocumentDtoLocal>();
         dto.Should().NotBeNull();
@@ -88,17 +102,14 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
     [Fact]
     public async Task Get_WithNonExistentId_ReturnsNotFound()
     {
-        // Act
         var response = await _client.GetAsync($"/Documents/{Guid.NewGuid()}");
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetIntegrity_WithExistingPayload_ReturnsIntegrityDto()
     {
-        // Arrange — seed a Document + EncryptedPayload directly (worker is not running in this test)
         var document = Document.Submit();
         var hash = new byte[32];
         var signature = new byte[64];
@@ -110,6 +121,9 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
             ciphertext: [1, 2, 3],
             nonce: [4, 5, 6],
             tag: [7, 8, 9],
+            salt: new byte[16],
+            kdfAlgorithm: "scrypt",
+            kdfParameters: "{\"n\":16384,\"r\":8,\"p\":1}",
             hash: hash,
             signature: signature,
             algorithm: "AES-256-GCM");
@@ -122,10 +136,8 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
             await dbContext.SaveChangesAsync();
         }
 
-        // Act
         var response = await _client.GetAsync($"/Documents/{document.Id}/integrity");
 
-        // Assert response
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var dto = await response.Content.ReadFromJsonAsync<IntegrityDtoLocal>();
         dto.Should().NotBeNull();
@@ -139,10 +151,8 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
     [Fact]
     public async Task GetIntegrity_WhenNoEncryptedPayloadExists_ReturnsNotFound()
     {
-        // Act
         var response = await _client.GetAsync($"/Documents/{Guid.NewGuid()}/integrity");
 
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -154,4 +164,6 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         byte[] Signature,
         string Algorithm,
         DateTimeOffset ProcessedAt);
+
+    private record RedisBlob(string Payload, string Passphrase);
 }

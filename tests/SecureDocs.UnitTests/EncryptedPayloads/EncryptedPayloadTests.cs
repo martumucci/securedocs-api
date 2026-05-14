@@ -20,6 +20,7 @@ public class EncryptedPayloadTests
         var ciphertext = TestData.ValidCiphertext();
         var nonce = TestData.ValidNonce();
         var tag = TestData.ValidTag();
+        var salt = TestData.ValidSalt();
         var hash = TestData.ValidHash();
         var signature = TestData.ValidSignature();
 
@@ -28,6 +29,7 @@ public class EncryptedPayloadTests
             ciphertext: ciphertext,
             nonce: nonce,
             tag: tag,
+            salt: salt,
             hash: hash,
             signature: signature);
 
@@ -35,6 +37,9 @@ public class EncryptedPayloadTests
         payload.Ciphertext.Should().BeEquivalentTo(ciphertext);
         payload.Nonce.Should().BeEquivalentTo(nonce);
         payload.Tag.Should().BeEquivalentTo(tag);
+        payload.Salt.Should().BeEquivalentTo(salt);
+        payload.KdfAlgorithm.Should().Be(TestData.ValidKdfAlgorithm);
+        payload.KdfParameters.Should().Be(TestData.ValidKdfParameters);
         payload.Hash.Should().BeEquivalentTo(hash);
         payload.Signature.Should().BeEquivalentTo(signature);
         payload.Algorithm.Should().Be(TestData.ValidAlgorithm);
@@ -81,6 +86,30 @@ public class EncryptedPayloadTests
         var act = () => TestData.AnEncryptedPayload(tag: []);
 
         act.Should().Throw<ArgumentException>().WithParameterName("tag");
+    }
+
+    [Fact]
+    public void Create_WithSaltShorterThanMinimum_ThrowsArgumentException()
+    {
+        var act = () => TestData.AnEncryptedPayload(salt: new byte[8]);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("salt");
+    }
+
+    [Fact]
+    public void Create_WithEmptyKdfAlgorithm_ThrowsArgumentException()
+    {
+        var act = () => TestData.AnEncryptedPayload(kdfAlgorithm: string.Empty);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("kdfAlgorithm");
+    }
+
+    [Fact]
+    public void Create_WithEmptyKdfParameters_ThrowsArgumentException()
+    {
+        var act = () => TestData.AnEncryptedPayload(kdfParameters: string.Empty);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("kdfParameters");
     }
 
     [Fact]

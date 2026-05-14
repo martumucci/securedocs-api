@@ -5,6 +5,7 @@ using SecureDocs.Application.Documents;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Application.Documents.IntegrationEvents;
 using SecureDocs.Domain.Documents;
+using SecureDocs.UnitTests.Helpers;
 
 namespace SecureDocs.UnitTests.Documents.Commands.SubmitDocument;
 
@@ -26,47 +27,42 @@ public class SubmitDocumentHandlerTests
             _unitOfWork);
     }
 
+    private static SubmitDocumentCommand ValidCommand(string? payload = null, string? passphrase = null)
+    {
+        return new SubmitDocumentCommand(
+            Payload: payload ?? "any payload",
+            Passphrase: passphrase ?? TestData.ValidPassphrase);
+    }
+
     [Fact]
     public async Task Handle_WithValidPayload_ReturnsResultWithPendingStatus()
     {
-        // Arrange
-        var command = new SubmitDocumentCommand("any payload");
+        var result = await _handler.Handle(ValidCommand(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
         result.Status.Should().Be(DocumentStatus.Pending);
         result.DocumentId.Should().NotBe(Guid.Empty);
     }
 
     [Fact]
-    public async Task Handle_WithValidPayload_SavesPayloadToStore()
+    public async Task Handle_WithValidPayload_SavesPayloadAndPassphraseToStore()
     {
-        // Arrange
         const string payload = "sensitive content";
-        var command = new SubmitDocumentCommand(payload);
+        const string passphrase = "correct horse battery staple";
+        var command = ValidCommand(payload, passphrase);
 
-        // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         await _payloadStore.Received(1).SaveAsync(
             Arg.Any<Guid>(),
-            payload,
+            Arg.Is<SubmissionPayload>(s => s.Payload == payload && s.Passphrase == passphrase),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_WithValidPayload_PersistsDocumentAndCommitsUnitOfWork()
     {
-        // Arrange
-        var command = new SubmitDocumentCommand("any payload");
+        await _handler.Handle(ValidCommand(), CancellationToken.None);
 
-        // Act
-        await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
         await _documentRepository.Received(1).AddAsync(
             Arg.Any<Document>(),
             Arg.Any<CancellationToken>());
@@ -76,13 +72,8 @@ public class SubmitDocumentHandlerTests
     [Fact]
     public async Task Handle_WithValidPayload_PublishesIntegrationEvent()
     {
-        // Arrange
-        var command = new SubmitDocumentCommand("any payload");
+        await _handler.Handle(ValidCommand(), CancellationToken.None);
 
-        // Act
-        await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
         await _integrationEventPublisher.Received(1).PublishAsync(
             Arg.Any<DocumentSubmittedIntegrationEvent>(),
             Arg.Any<CancellationToken>());
@@ -91,8 +82,6 @@ public class SubmitDocumentHandlerTests
     [Fact]
     public async Task Handle_WithValidPayload_PublishedEventHasMatchingDocumentId()
     {
-        // Arrange
-        var command = new SubmitDocumentCommand("any payload");
         Document? capturedDocument = null;
         DocumentSubmittedIntegrationEvent? capturedEvent = null;
 
@@ -104,10 +93,8 @@ public class SubmitDocumentHandlerTests
             Arg.Do<DocumentSubmittedIntegrationEvent>(e => capturedEvent = e),
             Arg.Any<CancellationToken>());
 
-        // Act
-        await _handler.Handle(command, CancellationToken.None);
+        await _handler.Handle(ValidCommand(), CancellationToken.None);
 
-        // Assert
         capturedDocument.Should().NotBeNull();
         capturedEvent.Should().NotBeNull();
         capturedEvent!.DocumentId.Should().Be(capturedDocument!.Id);
