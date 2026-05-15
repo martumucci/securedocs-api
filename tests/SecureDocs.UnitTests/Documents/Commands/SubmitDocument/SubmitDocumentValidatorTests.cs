@@ -34,7 +34,7 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithPayloadExceedingMaxLength_HasErrorForPayload()
     {
-        var result = _validator.TestValidate(Command(payload: new string('x', 100_001)));
+        var result = _validator.TestValidate(Command(payload: new string('x', 10_000_001)));
 
         result.ShouldHaveValidationErrorFor(c => c.Payload);
     }
@@ -42,7 +42,7 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithPayloadAtMaxLength_HasNoErrors()
     {
-        var result = _validator.TestValidate(Command(payload: new string('x', 100_000)));
+        var result = _validator.TestValidate(Command(payload: new string('x', 10_000_000)));
 
         result.ShouldNotHaveAnyValidationErrors();
     }

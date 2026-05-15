@@ -8,7 +8,7 @@ public class SubmitDocumentValidator : AbstractValidator<SubmitDocumentCommand>
     {
         RuleFor(c => c.Payload)
             .NotEmpty()
-            .MaximumLength(100_000);
+            .MaximumLength(10_000_000);
 
         RuleFor(c => c.Passphrase)
             .NotEmpty()
