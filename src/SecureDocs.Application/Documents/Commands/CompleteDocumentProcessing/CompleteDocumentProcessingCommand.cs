@@ -12,5 +12,6 @@ public record CompleteDocumentProcessingCommand(
     string KdfParameters,
     byte[] Hash,
     byte[] Signature,
-    string Algorithm
+    string Algorithm,
+    DateTimeOffset ProcessedAt
 ) : IRequest;

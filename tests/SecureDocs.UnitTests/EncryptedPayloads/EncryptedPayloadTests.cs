@@ -46,14 +46,21 @@ public class EncryptedPayloadTests
     }
 
     [Fact]
-    public void Create_SetsProcessedAtToUtcNow()
+    public void Create_PreservesTheGivenProcessedAt()
     {
-        var before = DateTimeOffset.UtcNow;
+        var processedAt = new DateTimeOffset(2026, 5, 16, 10, 30, 0, TimeSpan.Zero);
 
-        var payload = TestData.AnEncryptedPayload();
+        var payload = TestData.AnEncryptedPayload(processedAt: processedAt);
 
-        var after = DateTimeOffset.UtcNow;
-        payload.ProcessedAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
+        payload.ProcessedAt.Should().Be(processedAt);
+    }
+
+    [Fact]
+    public void Create_WithDefaultProcessedAt_ThrowsArgumentException()
+    {
+        var act = () => TestData.AnEncryptedPayload(processedAt: default(DateTimeOffset));
+
+        act.Should().Throw<ArgumentException>().WithParameterName("processedAt");
     }
 
     [Fact]

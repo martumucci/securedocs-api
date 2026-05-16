@@ -100,7 +100,8 @@ public class EncryptedPayload : Entity
         string kdfParameters,
         byte[] hash,
         byte[] signature,
-        string algorithm)
+        string algorithm,
+        DateTimeOffset processedAt)
     {
         return new EncryptedPayload(
             id: Guid.NewGuid(),
@@ -114,6 +115,6 @@ public class EncryptedPayload : Entity
             hash: hash,
             signature: signature,
             algorithm: algorithm,
-            processedAt: DateTimeOffset.UtcNow);
+            processedAt: processedAt);
     }
 }

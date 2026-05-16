@@ -40,7 +40,8 @@ public class DocumentProcessedConsumer : IConsumer<DocumentProcessedIntegrationE
                         KdfParameters: message.KdfParameters!,
                         Hash: message.Hash!,
                         Signature: message.Signature!,
-                        Algorithm: message.Algorithm!),
+                        Algorithm: message.Algorithm!,
+                        ProcessedAt: message.ProcessedAt),
                     context.CancellationToken);
             }
             else if (message.Status == "Failed")

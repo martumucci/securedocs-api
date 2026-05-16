@@ -109,5 +109,6 @@ public class CompleteDocumentProcessingHandlerTests
         capturedPayload.Hash.Should().BeEquivalentTo(command.Hash);
         capturedPayload.Signature.Should().BeEquivalentTo(command.Signature);
         capturedPayload.Algorithm.Should().Be(command.Algorithm);
+        capturedPayload.ProcessedAt.Should().Be(command.ProcessedAt);
     }
 }

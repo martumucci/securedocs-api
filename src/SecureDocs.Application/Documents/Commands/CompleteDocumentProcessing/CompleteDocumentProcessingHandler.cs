@@ -38,7 +38,8 @@ public class CompleteDocumentProcessingHandler : IRequestHandler<CompleteDocumen
             kdfParameters: request.KdfParameters,
             hash: request.Hash,
             signature: request.Signature,
-            algorithm: request.Algorithm);
+            algorithm: request.Algorithm,
+            processedAt: request.ProcessedAt);
 
         await _encryptedPayloadRepository.AddAsync(encryptedPayload, cancellationToken);
 

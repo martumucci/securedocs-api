@@ -126,7 +126,8 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
             kdfParameters: "{\"n\":16384,\"r\":8,\"p\":1}",
             hash: hash,
             signature: signature,
-            algorithm: "AES-256-GCM");
+            algorithm: "AES-256-GCM",
+            processedAt: new DateTimeOffset(2026, 5, 16, 12, 0, 0, TimeSpan.Zero));
 
         using (var scope = _factory.Services.CreateScope())
         {

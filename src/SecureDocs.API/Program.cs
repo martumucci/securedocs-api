@@ -1,11 +1,13 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using RedisRateLimiting;
 using SecureDocs.API.ExceptionHandlers;
 using SecureDocs.API.Middleware;
 using SecureDocs.Application.Common.Behaviors;
 using SecureDocs.Application.Documents.Commands.SubmitDocument;
 using SecureDocs.Infrastructure;
+using SecureDocs.Infrastructure.Persistence;
 using Serilog;
 using StackExchange.Redis;
 using System.Threading.RateLimiting;
@@ -73,6 +75,13 @@ builder.Services.AddHealthChecks()
         tags: new[] { "ready" });
 
 var app = builder.Build();
+
+if (builder.Configuration.GetValue<bool>("RunMigrationsOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 

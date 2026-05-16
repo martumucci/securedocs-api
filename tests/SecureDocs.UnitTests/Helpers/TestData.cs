@@ -11,6 +11,9 @@ internal static class TestData
     public const string ValidKdfParameters = "{\"n\":16384,\"r\":8,\"p\":1}";
     public const string ValidPassphrase = "correct horse battery staple";
 
+    public static readonly DateTimeOffset ValidProcessedAt =
+        new(2026, 5, 16, 12, 0, 0, TimeSpan.Zero);
+
     public static byte[] ValidCiphertext() => [1, 2, 3];
     public static byte[] ValidNonce() => [4, 5, 6];
     public static byte[] ValidTag() => [7, 8, 9];
@@ -28,7 +31,8 @@ internal static class TestData
         string? kdfParameters = null,
         byte[]? hash = null,
         byte[]? signature = null,
-        string? algorithm = null)
+        string? algorithm = null,
+        DateTimeOffset? processedAt = null)
     {
         return EncryptedPayload.Create(
             documentId: documentId ?? Guid.NewGuid(),
@@ -40,7 +44,8 @@ internal static class TestData
             kdfParameters: kdfParameters ?? ValidKdfParameters,
             hash: hash ?? ValidHash(),
             signature: signature ?? ValidSignature(),
-            algorithm: algorithm ?? ValidAlgorithm);
+            algorithm: algorithm ?? ValidAlgorithm,
+            processedAt: processedAt ?? ValidProcessedAt);
     }
 
     public static CompleteDocumentProcessingCommand ACompleteCommand(
@@ -53,7 +58,8 @@ internal static class TestData
         string? kdfParameters = null,
         byte[]? hash = null,
         byte[]? signature = null,
-        string? algorithm = null)
+        string? algorithm = null,
+        DateTimeOffset? processedAt = null)
     {
         return new CompleteDocumentProcessingCommand(
             DocumentId: documentId ?? Guid.NewGuid(),
@@ -65,7 +71,8 @@ internal static class TestData
             KdfParameters: kdfParameters ?? ValidKdfParameters,
             Hash: hash ?? ValidHash(),
             Signature: signature ?? ValidSignature(),
-            Algorithm: algorithm ?? ValidAlgorithm);
+            Algorithm: algorithm ?? ValidAlgorithm,
+            ProcessedAt: processedAt ?? ValidProcessedAt);
     }
 
     public static SubmissionPayload ASubmissionPayload(
