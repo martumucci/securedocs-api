@@ -1,6 +1,6 @@
 namespace SecureDocs.Application.Common.Interfaces;
 
-public record SubmissionPayload(string Payload, string Passphrase);
+public record SubmissionPayload(byte[] Payload, string Passphrase);
 
 public interface IPayloadStore
 {

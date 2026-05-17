@@ -21,10 +21,18 @@ public class DocumentsController : ControllerBase
     [HttpPost]
     [EnableRateLimiting("submit-document")]
     public async Task<IActionResult> Submit(
-        [FromBody] SubmitDocumentRequest request,
+        [FromForm] SubmitDocumentForm form,
         CancellationToken cancellationToken)
     {
-        var command = new SubmitDocumentCommand(request.Payload, request.Passphrase);
+        byte[] payload = [];
+        if (form.File is not null)
+        {
+            using var memory = new MemoryStream();
+            await form.File.CopyToAsync(memory, cancellationToken);
+            payload = memory.ToArray();
+        }
+
+        var command = new SubmitDocumentCommand(payload, form.Passphrase);
         var result = await _mediator.Send(command, cancellationToken);
 
         return Created($"/documents/{result.DocumentId}", result);
@@ -59,4 +67,8 @@ public class DocumentsController : ControllerBase
     }
 }
 
-public record SubmitDocumentRequest(string Payload, string Passphrase);
+public class SubmitDocumentForm
+{
+    public IFormFile? File { get; set; }
+    public string Passphrase { get; set; } = string.Empty;
+}

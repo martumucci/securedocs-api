@@ -49,7 +49,7 @@ The plain payload never lands on disk in this service.
 
 | Method | Path | Description |
 | --- | --- | --- |
-| `POST` | `/Documents` | Submit a document. Returns `201 Created` with `documentId` and `Pending` status. Rate-limited per IP. |
+| `POST` | `/Documents` | Submit a document as `multipart/form-data` (a `File` part + a `Passphrase` field). Returns `201 Created` with `documentId` and `Pending` status. Rate-limited per IP. |
 | `GET` | `/Documents/{id}` | Get a document's metadata. `200 OK` or `404 Not Found`. |
 | `GET` | `/Documents/{id}/integrity` | Get the integrity proof for a processed document. `200 OK` with `(documentId, hash, signature, algorithm, processedAt)` or `404 Not Found` if not yet processed. |
 | `GET` | `/health/live` | Liveness probe. |
@@ -113,9 +113,9 @@ The API listens on `http://localhost:5245`. Swagger UI is at `/swagger`.
 
 ```bash
 curl -i -X POST http://localhost:5245/Documents \
-  -H "Content-Type: application/json" \
   -H "X-Correlation-Id: my-trace-001" \
-  -d '{"payload": "hello"}'
+  -F "File=@/path/to/document.pdf" \
+  -F "Passphrase=correct horse battery staple"
 ```
 
 ---

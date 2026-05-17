@@ -24,15 +24,27 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         _client = factory.CreateClient();
     }
 
+    private static MultipartFormDataContent BuildForm(byte[] payload, string passphrase)
+    {
+        var content = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(payload), "File", "document.bin" },
+            { new StringContent(passphrase), "Passphrase" },
+        };
+        return content;
+    }
+
+    private Task<HttpResponseMessage> PostDocument(byte[] payload, string passphrase) =>
+        _client.PostAsync("/Documents", BuildForm(payload, passphrase));
+
     [Fact]
     public async Task Post_WithValidPayload_PersistsDocumentAndStoresBlobInRedis()
     {
         // Arrange
-        const string payload = "integration test content";
-        var request = new { payload, passphrase = ValidPassphrase };
+        var payload = "integration test content"u8.ToArray();
 
         // Act
-        var response = await _client.PostAsJsonAsync("/Documents", request);
+        var response = await PostDocument(payload, ValidPassphrase);
 
         // Assert response
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -48,7 +60,7 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         documentInDb.Should().NotBeNull();
         documentInDb!.Status.Should().Be(DocumentStatus.Pending);
 
-        // Assert JSON blob (payload + passphrase) stored in Redis
+        // Assert JSON blob (base64 payload + passphrase) stored in Redis
         var multiplexer = scope.ServiceProvider.GetRequiredService<IConnectionMultiplexer>();
         var redis = multiplexer.GetDatabase();
         var redisValue = await redis.StringGetAsync($"payload:{result.DocumentId}");
@@ -58,16 +70,14 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
             redisValue.ToString(),
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         blob.Should().NotBeNull();
-        blob!.Payload.Should().Be(payload);
+        blob!.Payload.Should().Equal(payload);
         blob.Passphrase.Should().Be(ValidPassphrase);
     }
 
     [Fact]
     public async Task Post_WithEmptyPayload_ReturnsBadRequest()
     {
-        var request = new { payload = string.Empty, passphrase = ValidPassphrase };
-
-        var response = await _client.PostAsJsonAsync("/Documents", request);
+        var response = await PostDocument([], ValidPassphrase);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -75,9 +85,7 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
     [Fact]
     public async Task Post_WithPassphraseShorterThanMinimum_ReturnsBadRequest()
     {
-        var request = new { payload = "any", passphrase = "short" };
-
-        var response = await _client.PostAsJsonAsync("/Documents", request);
+        var response = await PostDocument("any"u8.ToArray(), "short");
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -85,9 +93,7 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
     [Fact]
     public async Task Get_WithExistingId_ReturnsDocumentMetadata()
     {
-        var createResponse = await _client.PostAsJsonAsync(
-            "/Documents",
-            new { payload = "another document", passphrase = ValidPassphrase });
+        var createResponse = await PostDocument("another document"u8.ToArray(), ValidPassphrase);
         var created = await createResponse.Content.ReadFromJsonAsync<SubmitDocumentResult>();
 
         var getResponse = await _client.GetAsync($"/Documents/{created!.DocumentId}");
@@ -166,5 +172,5 @@ public class DocumentsApiTests : IClassFixture<IntegrationTestFactory>
         string Algorithm,
         DateTimeOffset ProcessedAt);
 
-    private record RedisBlob(string Payload, string Passphrase);
+    private record RedisBlob(byte[] Payload, string Passphrase);
 }

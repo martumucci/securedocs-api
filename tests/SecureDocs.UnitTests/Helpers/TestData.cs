@@ -75,12 +75,14 @@ internal static class TestData
             ProcessedAt: processedAt ?? ValidProcessedAt);
     }
 
+    public static byte[] ValidDocumentBytes() => "any document"u8.ToArray();
+
     public static SubmissionPayload ASubmissionPayload(
-        string? payload = null,
+        byte[]? payload = null,
         string? passphrase = null)
     {
         return new SubmissionPayload(
-            Payload: payload ?? "any payload",
+            Payload: payload ?? ValidDocumentBytes(),
             Passphrase: passphrase ?? ValidPassphrase);
     }
 }
