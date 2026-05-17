@@ -1,5 +1,9 @@
 # securedocs-api
 
+![CI](https://github.com/martumucci/securedocs-api/actions/workflows/ci.yml/badge.svg)
+![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 SecureDocs is a distributed evidence vault: users submit documents and the system returns a cryptographic proof (hash + Ed25519 signature over the hash and processing timestamp) that anyone holding the public key can verify independently, without trusting the service. The pattern fits use cases like legal document timestamping, regulatory evidence archival, or proof-of-submission systems.
 
 This repository is the API.
