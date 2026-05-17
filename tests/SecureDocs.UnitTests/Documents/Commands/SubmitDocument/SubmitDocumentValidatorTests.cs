@@ -8,10 +8,10 @@ public class SubmitDocumentValidatorTests
 {
     private readonly SubmitDocumentValidator _validator = new();
 
-    private static SubmitDocumentCommand Command(string? payload = null, string? passphrase = null)
+    private static SubmitDocumentCommand Command(byte[]? payload = null, string? passphrase = null)
     {
         return new SubmitDocumentCommand(
-            Payload: payload ?? "valid content",
+            Payload: payload ?? "valid content"u8.ToArray(),
             Passphrase: passphrase ?? TestData.ValidPassphrase);
     }
 
@@ -26,23 +26,23 @@ public class SubmitDocumentValidatorTests
     [Fact]
     public void Validate_WithEmptyPayload_HasErrorForPayload()
     {
-        var result = _validator.TestValidate(Command(payload: string.Empty));
+        var result = _validator.TestValidate(Command(payload: []));
 
         result.ShouldHaveValidationErrorFor(c => c.Payload);
     }
 
     [Fact]
-    public void Validate_WithPayloadExceedingMaxLength_HasErrorForPayload()
+    public void Validate_WithPayloadExceedingMaxSize_HasErrorForPayload()
     {
-        var result = _validator.TestValidate(Command(payload: new string('x', 10_000_001)));
+        var result = _validator.TestValidate(Command(payload: new byte[10_000_001]));
 
         result.ShouldHaveValidationErrorFor(c => c.Payload);
     }
 
     [Fact]
-    public void Validate_WithPayloadAtMaxLength_HasNoErrors()
+    public void Validate_WithPayloadAtMaxSize_HasNoErrors()
     {
-        var result = _validator.TestValidate(Command(payload: new string('x', 10_000_000)));
+        var result = _validator.TestValidate(Command(payload: new byte[10_000_000]));
 
         result.ShouldNotHaveAnyValidationErrors();
     }

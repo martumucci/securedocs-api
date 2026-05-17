@@ -27,10 +27,10 @@ public class SubmitDocumentHandlerTests
             _unitOfWork);
     }
 
-    private static SubmitDocumentCommand ValidCommand(string? payload = null, string? passphrase = null)
+    private static SubmitDocumentCommand ValidCommand(byte[]? payload = null, string? passphrase = null)
     {
         return new SubmitDocumentCommand(
-            Payload: payload ?? "any payload",
+            Payload: payload ?? "any document"u8.ToArray(),
             Passphrase: passphrase ?? TestData.ValidPassphrase);
     }
 
@@ -46,7 +46,7 @@ public class SubmitDocumentHandlerTests
     [Fact]
     public async Task Handle_WithValidPayload_SavesPayloadAndPassphraseToStore()
     {
-        const string payload = "sensitive content";
+        var payload = "sensitive content"u8.ToArray();
         const string passphrase = "correct horse battery staple";
         var command = ValidCommand(payload, passphrase);
 
@@ -54,7 +54,7 @@ public class SubmitDocumentHandlerTests
 
         await _payloadStore.Received(1).SaveAsync(
             Arg.Any<Guid>(),
-            Arg.Is<SubmissionPayload>(s => s.Payload == payload && s.Passphrase == passphrase),
+            Arg.Is<SubmissionPayload>(s => s.Payload.SequenceEqual(payload) && s.Passphrase == passphrase),
             Arg.Any<CancellationToken>());
     }
 
