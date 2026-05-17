@@ -12,6 +12,7 @@ This repository is the API.
 
 ## Table of contents
 
+- [Related repositories](#related-repositories)
 - [What this service does](#what-this-service-does)
 - [API surface](#api-surface)
 - [Tech stack](#tech-stack)
@@ -22,6 +23,13 @@ This repository is the API.
 - [Request flows](#request-flows)
 - [Design decisions](#design-decisions)
 - [Testing](#testing)
+
+---
+
+## Related repositories
+
+- [securedocs-crypto-worker](https://github.com/martumucci/securedocs-crypto-worker) — the worker that encrypts and signs submitted documents.
+- [securedocs-deploy](https://github.com/martumucci/securedocs-deploy) — full-system orchestration and end-to-end smoke test.
 
 ---
 
